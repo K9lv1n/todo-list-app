@@ -1,0 +1,13 @@
+# Python-specific files
+__pycache__/
+*.pyc
+*.env
+venv/
+.venv/
+
+# Database files
+*.db
+!tasks.db # If you specifically want to track tasks.db, remove this line or the one above
+
+# Flask-specific files
+instance/

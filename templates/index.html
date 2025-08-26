@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Enhanced To-Do List</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar for better aesthetics in dark mode */
+        body::-webkit-scrollbar {
+            width: 8px;
+        }
+        body::-webkit-scrollbar-track {
+            background: #2d3748; /* Darker scrollbar track */
+        }
+        body::-webkit-scrollbar-thumb {
+            background-color: #4a5568; /* Darker scrollbar thumb */
+            border-radius: 4px;
+            border: 2px solid #2d3748;
+        }
+        .task-completed .task-content {
+            text-decoration: line-through;
+            color: #a0aec0; /* Lighter gray for completed tasks in dark mode */
+        }
+    </style>
+</head>
+<!-- Dark mode classes applied to body and main container -->
+<body class="bg-gray-900 text-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
+    <!-- Adjusted width: Removed max-w-2xl for full width on larger screens, adjusted padding for breathing room -->
+    <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-full mx-auto sm:p-12 md:p-16">
+        <h1 class="text-4xl sm:text-5xl font-bold text-center text-white mb-8">My Enhanced To-Do List 🚀</h1>
+
+        <!-- Add Task Form -->
+        <form method="POST" action="/add" class="mb-8 p-6 bg-gray-700 rounded-lg shadow-md">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="md:col-span-1"> 
+                    <label for="task_content" class="block text-gray-300 text-sm font-bold mb-2">Task:</label>
+                    <input type="text" id="task_content" name="task_content" placeholder="Enter new task" required
+                           class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-900 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-200 text-base sm:text-sm md:max-w-lg md:mx-auto block">
+                </div>
+                <div class="md:col-span-1">
+                    <label for="task_category" class="block text-gray-300 text-sm font-bold mb-2">Category:</label>
+                    <input type="text" id="task_category" name="task_category" placeholder="e.g., Work, Home, Study"
+                           class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-900 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-200 text-base sm:text-sm md:max-w-lg md:mx-auto block">
+                </div>
+                <div class="md:col-span-1">
+                    <label for="task_deadline" class="block text-gray-300 text-sm font-bold mb-2">Deadline:</label>
+                    <input type="date" id="task_deadline" name="task_deadline"
+                           class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-900 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-200 text-base sm:text-sm md:max-w-lg md:mx-auto block">
+                </div>
+                <div class="md:col-span-1">
+                    <label for="task_location" class="block text-gray-300 text-sm font-bold mb-2">Location (for map):</label>
+                    <input type="text" id="task_location" name="task_location" placeholder="e.g., 1600 Amphitheatre Pkwy, CA"
+                           class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-900 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-200 text-base sm:text-sm md:max-w-lg md:mx-auto block">
+                </div>
+            </div>
+            <button type="submit"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition duration-150 ease-in-out w-full text-base sm:text-sm md:max-w-lg md:mx-auto block">
+                Add Task
+            </button>
+        </form>
+
+        <!-- Current Tasks List -->
+        <h2 class="text-2xl sm:text-3xl font-semibold text-gray-200 mb-4 text-center">Your Tasks:</h2>
+        {% if tasks %}
+            <ul class="space-y-4">
+                {% for task in tasks %}
+                <li class="p-4 rounded-lg shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between
+                           {% if task.completed %} task-completed bg-gray-600 {% else %} bg-gray-700 {% endif %}
+                           {% if not task.completed and task.deadline and task.deadline.date() < today.date() %} bg-red-800 text-red-100 {% elif not task.completed and task.deadline and task.deadline.date() == today.date() %} bg-yellow-800 text-yellow-100 {% endif %}">
+                    <div class="flex-grow text-left mb-2 sm:mb-0">
+                        <p class="text-lg font-medium text-white task-content break-words">{{ task.content }}</p>
+                        <div class="flex flex-wrap items-center mt-1 text-gray-300 text-sm">
+                            {% if task.category %}
+                            <span class="bg-gray-600 px-2 py-1 rounded-full mr-2 mb-1 sm:mb-0">#{{ task.category }}</span>
+                            {% endif %}
+                            {% if task.deadline %}
+                            <span class="mr-2 mb-1 sm:mb-0">Due: {{ task.deadline.strftime('%Y-%m-%d') }}</span>
+                            {% endif %}
+                            {% if task.location %}
+                            <a href="https://www.google.com/maps/search/?api=1&query={{ task.location }}" target="_blank"
+                               class="text-blue-400 hover:underline mb-1 sm:mb-0 inline-flex items-center">
+                                View Map <span class="ml-1">🗺️</span>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
+                        <!-- Mark as Complete Button/Link -->
+                        <a href="{{ url_for('complete_task', id=task.id) }}"
+                           class="py-2 px-4 rounded-md transition duration-150 ease-in-out text-center text-sm
+                           {% if task.completed %} bg-green-700 hover:bg-green-800 text-white {% else %} bg-green-500 hover:bg-green-600 text-white {% endif %}">
+                            {% if task.completed %} Unmark {% else %} Complete {% endif %}
+                        </a>
+                        <!-- Delete Button -->
+                        <a href="{{ url_for('delete_task', id=task.id) }}"
+                           class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-md transition duration-150 ease-in-out text-center text-sm">
+                            Delete
+                        </a>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-center text-gray-400 text-lg">No tasks added yet! Start by adding one above. 🎉</p>
+        {% endif %}
+    </div>
+</body>
+</html>
